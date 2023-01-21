@@ -7,15 +7,15 @@ struct game_stats {
     player_exhaust: i8,
 }
 struct allowed_steps {
-    can_step: bool,
     can_drink: bool,
+    has_to_drink: bool,
 }
 
 fn determine_steps(stats:game_stats) -> allowed_steps {
 
-    let mut allowed:allowed_steps = allowed_steps { 
-        can_step: true, 
-        can_drink: true 
+    let mut allowed:allowed_steps = allowed_steps {  
+        can_drink: true,
+        has_to_drink: false
     };
     
     // player is out of water and is exhausted
@@ -24,8 +24,8 @@ fn determine_steps(stats:game_stats) -> allowed_steps {
     }
 
     // player is out of stamina
-    if stats.player_exhaust + 1 == 8 {
-        allowed.can_step = false
+    if stats.player_exhaust + 1 == 9 {
+        allowed.has_to_drink = true
     }
 
 
@@ -33,7 +33,7 @@ fn determine_steps(stats:game_stats) -> allowed_steps {
 
 }
 fn main() {
-    // memory of game
+    // memory of game | starting stats
     let mut stats:game_stats = game_stats { 
         player_pos: 0, 
         badguys_pos: -20, 
@@ -48,15 +48,23 @@ fn main() {
 
      let next_step: i8 = selector(allow);
 
+     // game goes untill player is not at end
+     while stats.player_pos < 200 {
+
+        
+     }
+
+     // ends
+     println!("You won");
 }
 
 fn selector(allowed: allowed_steps) -> i8{
 
     let mut print_string: String = String::new();
 
-    // player must drink since they cant step
+    // player must drink since they cant step forward
     if allowed.can_drink && !allowed.can_step{
-
+        
     }
     if allowed.can_drink && allowed.can_step {
 
