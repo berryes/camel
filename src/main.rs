@@ -1,3 +1,5 @@
+
+#[derive(Debug,Copy, Clone)]
 struct game_stats {
     player_pos: i16,
     badguys_pos: i16,
@@ -6,32 +8,16 @@ struct game_stats {
     player_thirst: i8,
     player_exhaust: i8,
 }
-struct allowed_steps {
-    can_drink: bool,
-    has_to_drink: bool,
+
+#[derive(Debug, Copy, Clone)]
+enum Steps{
+    Step, // steps forward 5-12 km 
+    Faststep, // steps forward 10-20 km
+    Stop, // stops for the nigth
+    Drink, // drinks from the kulacs
 }
 
-fn determine_steps(stats:game_stats) -> allowed_steps {
 
-    let mut allowed:allowed_steps = allowed_steps {  
-        can_drink: true,
-        has_to_drink: false
-    };
-    
-    // player is out of water and is exhausted
-    if stats.bottle == 0 && stats.player_thirst + 1 > 6  {
-        allowed.can_drink = false
-    }
-
-    // player is out of stamina
-    if stats.player_exhaust + 1 == 9 {
-        allowed.has_to_drink = true
-    }
-
-
-    return allowed;
-
-}
 fn main() {
     // memory of game | starting stats
     let mut stats:game_stats = game_stats { 
@@ -44,44 +30,81 @@ fn main() {
      };
 
      // defining what step the player can make
-     let allow: allowed_steps = determine_steps(stats);
 
-     let next_step: i8 = selector(allow);
 
      // game goes untill player is not at end
      while stats.player_pos < 200 {
+        let mut nextstep: Vec<Steps> = get_next_step(stats);
+        select(nextstep.clone()); 
 
-        
+        println!("{:?}",nextstep);
      }
+
 
      // ends
      println!("You won");
 }
 
-fn selector(allowed: allowed_steps) -> i8{
-
-    let mut print_string: String = String::new();
-
-    // player must drink since they cant step forward
-    if allowed.can_drink && !allowed.can_step{
-        
-    }
-    if allowed.can_drink && allowed.can_step {
-
-    }
-
-    let options:Vec<String> = vec![
-        String::from("A, Ivás a kulacsodból"),
-        String::from("B, Tovább haladás"),
-        String::from("C, Tovább haladás sietve"),
-        String::from("D, Megállás egy éjszakára"),
-        String::from("Q, Kilépés")
-    ];
-
-    let mut line:String = String::new();
-
-    std::io::stdin().read_line(&mut line).unwrap();
+fn get_next_step(stats:game_stats) -> Vec<Steps>{
 
     
-    return 3;
+    // full of enums
+    let mut options: Vec<Steps> = Vec::new();
+
+    // DETERMINE WHAT THE PLAYER CAN do 
+
+    // exhausted and has to stop for the nigth, no other option
+    if stats.player_exhaust + 1 > 8 {
+        options.push( Steps::Stop );
+        return options
+    }
+
+    // thirst is at max
+    if stats.player_thirst + 1 > 6 {
+
+       //  can drink
+        if stats.bottle - 1 == 0 {
+        options.push( Steps::Drink );
+        return options;
+        }
+
+       //  CANT drink
+       else {
+        options.push( Steps::Stop ); // has to stop for tonigth
+        return  options;
+        } 
+    }
+
+    options.push( Steps::Step );
+    options.push( Steps::Faststep );
+
+
+    // print out the choises
+    // return what the player have chosen
+    return  options;
+}
+
+
+
+fn select(avail_steps:Vec<Steps>) -> Steps{
+
+    let mut prinln: String = String::new();
+    let mut console = String::new();
+    
+    for step in avail_steps {
+        match step {
+            Steps::Step => prinln.push_str("A, Walk forward"),
+            Steps::Faststep => prinln.push_str("B, Walk forward fast"),
+            Steps::Stop => prinln.push_str("C, Stop for tonigth"),
+            Steps::Drink => prinln.push_str("B, Drink")
+        }
+
+        prinln.push_str("\n");
+    }
+    println!("Choose your next step:\n {}",prinln);
+    std::io::stdin().read_line(&mut console).unwrap();
+    
+
+
+    return Steps::Faststep;
 }
