@@ -1,4 +1,15 @@
+use std::{process::exit, option};
+
 use rand::Rng;
+fn rng( from: i16, to:i16) -> i16{
+    let mut rng = rand::thread_rng();
+    return rng.gen_range(from..to);
+}
+
+fn rng_i8( from: i8, to:i8) -> i8{
+    let mut rng = rand::thread_rng();
+    return rng.gen_range(from..to);
+}
 
 #[derive(Debug,Copy, Clone)]
 struct game_stats {
@@ -9,6 +20,18 @@ struct game_stats {
     player_thirst: i8,
     player_exhaust: i8,
 }
+trait Actions {
+    fn step(self);
+}
+impl Actions for game_stats{
+    fn step(mut self) {
+        self.player_thirst += 1;
+        self.player_exhaust += 1;
+        self.player_pos += rng(5,12);
+        self.badguys_pos += rng(7, 14);
+    }
+}
+
 
 #[derive(Debug, Copy, Clone)]
 enum Steps{
@@ -18,10 +41,6 @@ enum Steps{
     Drink, // drinks from the kulacs
 }
 
-fn rng( from: i16, to:i16) -> i16{
-    let mut rng = rand::thread_rng();
-    return rng.gen_range(from..to);
-}
 
 
 fn main() {
@@ -35,41 +54,51 @@ fn main() {
         player_thirst: 0,
      };
 
-     // defining what step the player can make
-
 
      // game goes untill player is not at end
      while stats.player_pos < 200 {
-        let mut nextstep: Vec<Steps> = get_next_step(stats);
-        println!("PPOS:{} | BGUYPOS: {} | BOTTLE {} | EXHAUST: {} | THIRS: {}", stats.player_pos,stats.badguys_pos,stats.bottle,stats.player_exhaust,stats.player_thirst);
-        let next:Steps = select(nextstep.clone()); 
-        
-        // match for next steps
 
+        // badguys catch up
+        if stats.player_pos == stats.badguys_pos || stats.player_pos < stats.badguys_pos {
+            println!("The bandits have cougth up to you, YOU LOST");
+            return;
+        }
+
+
+        let mut nextstep: Vec<Steps> = get_next_step(stats);
+        // no steps to be made, kill the game
+        if nextstep.len() == 0 { panic!() }
+
+
+        println!("PPOS:{} | BGUYPOS: {} | BOTTLE {} | EXHAUST: {} | THIRS: {}", stats.player_pos,stats.badguys_pos,stats.bottle,stats.player_exhaust,stats.player_thirst);
+    
+        let next:Steps = select(nextstep.clone()); 
+    
         match next {
-            Steps::Step =>{
+            Steps::Step => { /* stats.step() */
                 stats.player_thirst += 1;
                 stats.player_exhaust += 1;
                 stats.player_pos += rng(5,12);
                 stats.badguys_pos += rng(7, 14);
-
             },
-            Steps::Faststep =>{
 
+            Steps::Faststep =>{
                 stats.player_thirst += 1;
-                stats.player_exhaust += i8::from(rng(1, 3));
+                stats.player_exhaust += rng_i8(1, 3);
                 stats.player_pos += rng(10,20);
                 stats.badguys_pos += rng(7, 14);
-
-            }
-            Steps::Stop => {
-
             },
-            Steps::Drink => {
 
+            Steps::Stop => {
+                stats.player_exhaust = 0;
+                stats.badguys_pos += rng(7, 14);
+            },
+
+            Steps::Drink => {
+                stats.player_thirst = 0;
+                stats.bottle += -1;
             }
         }
-        println!("{:?}",nextstep);
      }
 
 
@@ -77,42 +106,35 @@ fn main() {
      println!("You won");
 }
 
-fn get_next_step(stats:game_stats) -> Vec<Steps>{
-
-    
+fn get_next_step(stats:game_stats) -> Vec<Steps>{    
     // full of enums
     let mut options: Vec<Steps> = Vec::new();
 
     // DETERMINE WHAT THE PLAYER CAN do 
 
+
     // exhausted and has to stop for the nigth, no other option
-    if stats.player_exhaust + 1 > 8 {
+    if stats.player_exhaust == 8 || stats.player_exhaust > 8 {
+        println!("Too tired to go forward, get some sleep");
         options.push( Steps::Stop );
         return options
     }
 
-    // thirst is at max
-    if stats.player_thirst + 1 > 6 {
-
-       //  can drink
-        if stats.bottle - 1 == 0 {
-        options.push( Steps::Drink );
+    // too thirsty
+    if stats.player_thirst == 6 {
+        println!("Too thirsty to go forward, you died");
         return options;
-        }
-
-       //  CANT drink
-       else {
-        options.push( Steps::Stop ); // has to stop for tonigth
-        return  options;
-        } 
     }
+
+    if stats.bottle > 0 {
+        options.push( Steps::Drink )
+    }
+
 
     options.push( Steps::Step );
     options.push( Steps::Faststep );
 
-
-    // print out the choises
-    // return what the player have chosen
+    
     return  options;
 }
 
@@ -120,8 +142,9 @@ fn get_next_step(stats:game_stats) -> Vec<Steps>{
 
 fn get_input(changer: &mut String){
     std::io::stdin().read_line(changer).unwrap();
-    changer.strip_suffix("\n");
+    changer.strip_suffix("\n"); // removing stupid enter
 }
+
 fn select(avail_steps:Vec<Steps>) -> Steps{
 
     // all the available step's string will be added here, then printed
@@ -160,11 +183,12 @@ fn select(avail_steps:Vec<Steps>) -> Steps{
 
     // Returning shit as Step enum
     match console.as_str() {
-        "A" => return  Steps::Step,
-        "B" => return Steps::Faststep,
-        "C" => return Steps::Stop,
-        "D" => return Steps::Drink,
-        &_ => return Steps::Step,
+        "A\n" => return  Steps::Step,
+        "B\n" => return Steps::Faststep,
+        "C\n" => return Steps::Stop,
+        "D\n" => return Steps::Drink,
+        &_ => return Steps::Step
     }
+
 
 }
