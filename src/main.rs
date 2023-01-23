@@ -1,5 +1,4 @@
-use std::{string, panic::panic_any};
-
+use rand::Rng;
 
 #[derive(Debug,Copy, Clone)]
 struct game_stats {
@@ -17,6 +16,11 @@ enum Steps{
     Faststep, // steps forward 10-20 km
     Stop, // stops for the nigth
     Drink, // drinks from the kulacs
+}
+
+fn rng( from: i16, to:i16) -> i16{
+    let mut rng = rand::thread_rng();
+    return rng.gen_range(from..to);
 }
 
 
@@ -42,6 +46,29 @@ fn main() {
         
         // match for next steps
 
+        match next {
+            Steps::Step =>{
+                stats.player_thirst += 1;
+                stats.player_exhaust += 1;
+                stats.player_pos += rng(5,12);
+                stats.badguys_pos += rng(7, 14);
+
+            },
+            Steps::Faststep =>{
+
+                stats.player_thirst += 1;
+                stats.player_exhaust += i8::from(rng(1, 3));
+                stats.player_pos += rng(10,20);
+                stats.badguys_pos += rng(7, 14);
+
+            }
+            Steps::Stop => {
+
+            },
+            Steps::Drink => {
+
+            }
+        }
         println!("{:?}",nextstep);
      }
 
@@ -137,7 +164,7 @@ fn select(avail_steps:Vec<Steps>) -> Steps{
         "B" => return Steps::Faststep,
         "C" => return Steps::Stop,
         "D" => return Steps::Drink,
-        _ => panic!("idk what happened")
+        &_ => return Steps::Step,
     }
 
 }
