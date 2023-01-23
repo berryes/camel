@@ -1,6 +1,8 @@
 use std::{process::exit, option};
 
 use rand::Rng;
+use terminal_size::terminal_size;
+use unicode_width::UnicodeWidthStr;
 fn rng( from: i16, to:i16) -> i16{
     let mut rng = rand::thread_rng();
     return rng.gen_range(from..to);
@@ -44,6 +46,17 @@ enum Steps{
 
 
 fn main() {
+
+    let tsize = terminal_size()
+    .expect("Failed to read the terminal diameters");
+
+    let teststr = "🐫";
+    let width = UnicodeWidthStr::width(teststr);
+    
+    let dirt:String = String::new();
+
+
+
     // memory of game | starting stats
     let mut stats:game_stats = game_stats { 
         player_pos: 0, 
@@ -67,7 +80,7 @@ fn main() {
 
         let mut nextstep: Vec<Steps> = get_next_step(stats);
         // no steps to be made, kill the game
-        if nextstep.len() == 0 { panic!() }
+        if nextstep.len() == 0 || nextstep.len() < 0 { return; }
 
 
         println!("PPOS:{} | BGUYPOS: {} | BOTTLE {} | EXHAUST: {} | THIRS: {}", stats.player_pos,stats.badguys_pos,stats.bottle,stats.player_exhaust,stats.player_thirst);
@@ -123,7 +136,7 @@ fn get_next_step(stats:game_stats) -> Vec<Steps>{
     // too thirsty
     if stats.player_thirst == 6 {
         println!("Too thirsty to go forward, you died");
-        return options;
+        return options
     }
 
     if stats.bottle > 0 {
